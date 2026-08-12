@@ -425,6 +425,49 @@
       </table>
     </div>
 
+    <div class="auto-panel">
+      <h2 style="margin-bottom:10px;">6B · Jalankan 36 Skenario Otomatis — Sisi Server (3 Lux × 4 Pose × 3 Perangkat)</h2>
+      <div class="status-line" style="margin-bottom:10px;">
+        Menjalankan uji sisi server (mode di atas: <b>Panggil API Server Sungguhan</b> atau <b>Simulasi</b>) berturut-turut untuk seluruh 36 kombinasi skenario, agar hasilnya sepadan dan dapat dibandingkan langsung dengan 36 skenario sisi client pada bagian 4B.
+      </div>
+      <div class="auto-controls">
+        <div class="field" style="margin-bottom:0;">
+          <label for="autoTrialsServer">Trial per Skenario</label>
+          <select id="autoTrialsServer">
+            <option value="1" selected>1 trial</option>
+            <option value="3">3 trial</option>
+            <option value="5">5 trial</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="autoGapServer">Jeda Antar-trial (ms)</label>
+          <input type="number" id="autoGapServer" value="400" min="0" step="100">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>&nbsp;</label>
+          <div class="checkline">
+            <input type="checkbox" id="autoManualConfirmServer" checked>
+            <label for="autoManualConfirmServer" style="margin:0;">Jeda konfirmasi manual sebelum tiap skenario (agar cahaya/pose/perangkat benar-benar diubah secara fisik)</label>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="primary" id="btnStartAutoServer" disabled>▶ Mulai 36 Skenario Otomatis (Server)</button>
+        <button id="btnAutoNextServer" disabled>Lanjut ke Skenario Berikutnya →</button>
+        <button id="btnStopAutoServer" disabled>■ Hentikan</button>
+        <span class="status-line">Menggunakan mode &amp; parameter yang dipilih di atas (Real API / Simulasi) untuk tiap trial.</span>
+      </div>
+
+      <div class="progress-outer"><div class="progress-inner" id="autoProgressBarServer"></div></div>
+      <div class="progress-text">
+        <span>Skenario: <b id="autoProgressCountServer">0/36</b> (<span id="autoProgressPctServer">0%</span>)</span>
+        <span class="muted" id="autoProgressLabelServer">belum dimulai</span>
+        <span class="muted">Trial: <b id="autoProgressTrialServer">0/0</b></span>
+      </div>
+      <div class="progress-status" id="autoStatusMsgServer"></div>
+      <div class="scenario-grid" id="autoScenarioGridServer"></div>
+    </div>
+
     <h2 style="margin-top:20px;">Ringkasan Perbandingan Client vs Server</h2>
     <table>
       <thead>
@@ -527,6 +570,7 @@
     $('btnRunTest').disabled = false;
     $('btnStartAuto').disabled = false;
     $('btnRunServerTest').disabled = false;
+    $('btnStartAutoServer').disabled = false;
     $('serverTestStatus').textContent = 'Kamera aktif — siap menjalankan uji sisi server.';
     if($('liveTrackToggle').checked) startLiveTrack();
   });
@@ -540,8 +584,10 @@
     $('btnRunTest').disabled = true;
     $('btnStartAuto').disabled = true;
     $('btnRunServerTest').disabled = true;
+    $('btnStartAutoServer').disabled = true;
     $('serverTestStatus').textContent = 'Aktifkan kamera terlebih dahulu untuk mengambil frame uji.';
     if(autoState.running) stopAutomation();
+    if(autoStateServer.running) stopAutomationServer();
   });
 
   function grabCanvas(){
@@ -1157,20 +1203,20 @@
     $('serverCompareBody').innerHTML = html;
   }
 
-  $('btnRunServerTest').addEventListener('click', async ()=>{
+  // runOneServerTrial(): menjalankan satu trial sisi server (real API atau simulasi)
+  // sesuai mode & parameter yang sedang dipilih di form. Dipakai baik oleh tombol
+  // manual (4·6) maupun oleh runner 36-skenario otomatis (6B) di bawah.
+  // Mengembalikan {ok, message} — tidak mengatur disabled state tombol (itu tanggung jawab pemanggil).
+  async function runOneServerTrial(){
     if(!stream || !video.videoWidth){
-      alert('Aktifkan kamera terlebih dahulu untuk mengambil frame uji.');
-      return;
+      return {ok:false, message:'Aktifkan kamera terlebih dahulu untuk mengambil frame uji.'};
     }
     const mode = $('serverMode').value;
-    $('btnRunServerTest').disabled = true;
 
     if(mode === 'real'){
       const url = $('serverUrl').value.trim();
       if(!url){
-        alert('Isi Endpoint URL API server terlebih dahulu.');
-        $('btnRunServerTest').disabled = false;
-        return;
+        return {ok:false, message:'Isi Endpoint URL API server terlebih dahulu.'};
       }
       $('serverTestStatus').textContent = 'Mengirim frame ke server…';
       try{
@@ -1189,25 +1235,29 @@
           // Status bukan 2xx (mis. 404 salah route, 500 error server) — JANGAN
           // dicatat ke log, karena akan mengotori rata-rata dengan angka waktu
           // yang tidak merepresentasikan pemrosesan sungguhan.
-          $('serverTestStatus').innerHTML =
-            `<span style="color:#dc2626;font-weight:600;">Gagal — status HTTP ${resp.status}.</span> `+
-            `Endpoint tidak merespons dengan benar (periksa URL/route). Total waktu tempuh: ${totalMs.toFixed(1)} ms — tidak dicatat ke tabel.`;
-        } else {
-          let validJson = false;
-          try{
-            const parsed = JSON.parse(bodyText);
-            // Validasi minimal: respons API deteksi wajah kita mengembalikan status:'ok'
-            validJson = parsed && parsed.status === 'ok';
-          } catch(_e){ /* bukan JSON valid */ }
-
-          logServerTrial('API Sungguhan', payloadKb, 0, totalMs, 0, 0, totalMs);
-          $('serverTestStatus').innerHTML = validJson
-            ? `<span style="color:#16a34a;font-weight:600;">Selesai — status HTTP ${resp.status} (respons valid).</span> Total ${totalMs.toFixed(1)} ms.`
-            : `<span style="color:#d97706;font-weight:600;">Selesai — status HTTP ${resp.status}, tapi body respons bukan JSON {status:'ok'} yang diharapkan.</span> Total ${totalMs.toFixed(1)} ms. Periksa apakah endpoint benar-benar API deteksi wajah ini.`;
+          const msg = `Gagal — status HTTP ${resp.status}. Endpoint tidak merespons dengan benar (periksa URL/route). Total waktu tempuh: ${totalMs.toFixed(1)} ms — tidak dicatat ke tabel.`;
+          $('serverTestStatus').innerHTML = `<span style="color:#dc2626;font-weight:600;">Gagal — status HTTP ${resp.status}.</span> Endpoint tidak merespons dengan benar (periksa URL/route). Total waktu tempuh: ${totalMs.toFixed(1)} ms — tidak dicatat ke tabel.`;
+          return {ok:false, message: msg};
         }
+
+        let validJson = false;
+        try{
+          const parsed = JSON.parse(bodyText);
+          // Validasi minimal: respons API deteksi wajah kita mengembalikan status:'ok'
+          validJson = parsed && parsed.status === 'ok';
+        } catch(_e){ /* bukan JSON valid */ }
+
+        logServerTrial('API Sungguhan', payloadKb, 0, totalMs, 0, 0, totalMs);
+        const msg = validJson
+          ? `Selesai — status HTTP ${resp.status} (respons valid). Total ${totalMs.toFixed(1)} ms.`
+          : `Selesai — status HTTP ${resp.status}, tapi body respons bukan JSON {status:'ok'} yang diharapkan. Total ${totalMs.toFixed(1)} ms.`;
+        $('serverTestStatus').innerHTML = validJson
+          ? `<span style="color:#16a34a;font-weight:600;">Selesai — status HTTP ${resp.status} (respons valid).</span> Total ${totalMs.toFixed(1)} ms.`
+          : `<span style="color:#d97706;font-weight:600;">Selesai — status HTTP ${resp.status}, tapi body respons bukan JSON {status:'ok'} yang diharapkan.</span> Total ${totalMs.toFixed(1)} ms. Periksa apakah endpoint benar-benar API deteksi wajah ini.`;
+        return {ok:true, message: msg};
       } catch(e){
-        $('serverTestStatus').innerHTML =
-          `<span style="color:#dc2626;font-weight:600;">Gagal menghubungi server:</span> ${e.message} (periksa URL, CORS, atau koneksi).`;
+        $('serverTestStatus').innerHTML = `<span style="color:#dc2626;font-weight:600;">Gagal menghubungi server:</span> ${e.message} (periksa URL, CORS, atau koneksi).`;
+        return {ok:false, message: 'Gagal menghubungi server: '+e.message};
       }
     } else {
       const payloadKb = parseFloat($('payloadKb').value) || 0;
@@ -1221,7 +1271,14 @@
       const totalMs = rtt + uploadMs + srvProc + downloadMs;
       logServerTrial('Simulasi', payloadKb, uploadMs, rtt, srvProc, downloadMs, totalMs);
       $('serverTestStatus').textContent = `Estimasi selesai — total ${totalMs.toFixed(1)} ms.`;
+      return {ok:true, message:`Estimasi selesai — total ${totalMs.toFixed(1)} ms.`};
     }
+  }
+
+  $('btnRunServerTest').addEventListener('click', async ()=>{
+    $('btnRunServerTest').disabled = true;
+    const result = await runOneServerTrial();
+    if(!result.ok && result.message) alert(result.message);
     $('btnRunServerTest').disabled = false;
   });
 
@@ -1230,6 +1287,129 @@
     const rows = serverLog.map(r=>[r.idx,r.mode,r.scenario,r.payloadKb,r.uploadMs,r.rttMs,r.serverProcMs,r.downloadMs,r.totalMs].join(',')).join('\n');
     downloadBlob(header+rows, 'log-perbandingan-server-vs-client.csv', 'text/csv');
   });
+
+  // ---------- Otomatisasi 36 Skenario Sisi Server (3 Lux × 4 Pose × 3 Perangkat) ----------
+  // Memanfaatkan ALL_COMBOS/comboLabel/sleep yang sudah didefinisikan pada
+  // otomatisasi sisi client (bagian 4B) di atas, agar kedua runner konsisten.
+  const autoStateServer = { running:false, abort:false, nextResolve:null };
+
+  function renderScenarioGridServer(activeIdx, doneCount){
+    const cells = ALL_COMBOS.map((c,i)=>{
+      let cls = 'scenario-cell';
+      if(i < doneCount) cls += ' done';
+      if(i === activeIdx) cls += ' active';
+      return `<div class="${cls}" title="${comboLabel(c)}">${i+1}<br>${c.lux}L·${c.pose}°<br>${c.device}</div>`;
+    }).join('');
+    $('autoScenarioGridServer').innerHTML = cells;
+  }
+
+  function updateAutoProgressServer(idx, trialIdx, trialsPerScenario, statusText){
+    const total = ALL_COMBOS.length;
+    const doneScenarios = Math.min(idx, total);
+    const pct = Math.round((doneScenarios/total)*100);
+    $('autoProgressCountServer').textContent = `${Math.min(idx+1, total)}/${total}`;
+    $('autoProgressPctServer').textContent = pct + '%';
+    $('autoProgressBarServer').style.width = pct + '%';
+    $('autoProgressLabelServer').textContent = idx < total ? comboLabel(ALL_COMBOS[idx]) : 'selesai';
+    $('autoProgressTrialServer').textContent = `${trialIdx}/${trialsPerScenario}`;
+    $('autoStatusMsgServer').textContent = statusText || '';
+    renderScenarioGridServer(idx, doneScenarios);
+  }
+
+  function waitForNextOrAbortServer(){
+    return new Promise(resolve=>{
+      autoStateServer.nextResolve = resolve;
+    });
+  }
+
+  $('btnAutoNextServer').addEventListener('click', ()=>{
+    if(autoStateServer.nextResolve){ autoStateServer.nextResolve(true); autoStateServer.nextResolve=null; }
+  });
+  $('btnStopAutoServer').addEventListener('click', ()=>{
+    stopAutomationServer();
+  });
+
+  function stopAutomationServer(){
+    autoStateServer.abort = true;
+    if(autoStateServer.nextResolve){ autoStateServer.nextResolve(false); autoStateServer.nextResolve=null; }
+  }
+
+  function setAutoRunningUIServer(running){
+    $('btnStartAutoServer').disabled = running;
+    $('btnStopAutoServer').disabled = !running;
+    $('btnAutoNextServer').disabled = true;
+    $('btnRunServerTest').disabled = running || !stream;
+    $('serverMode').disabled = running;
+    $('lux').disabled = running || autoState.running;
+    $('pose').disabled = running || autoState.running;
+    $('device').disabled = running || autoState.running;
+  }
+
+  $('btnStartAutoServer').addEventListener('click', async ()=>{
+    if(autoStateServer.running) return;
+    if(autoState.running){
+      alert('Otomatisasi sisi client (4B) sedang berjalan. Hentikan dulu sebelum memulai otomatisasi sisi server.');
+      return;
+    }
+    if(!stream || !video.videoWidth){
+      alert('Aktifkan kamera terlebih dahulu untuk mengambil frame uji.');
+      return;
+    }
+    if($('serverMode').value === 'real' && !$('serverUrl').value.trim()){
+      alert('Isi Endpoint URL API server terlebih dahulu, atau pilih mode Simulasi.');
+      return;
+    }
+    const trialsPerScenario = parseInt($('autoTrialsServer').value,10) || 1;
+    const gapMs = Math.max(0, parseInt($('autoGapServer').value,10) || 0);
+    const manualConfirm = $('autoManualConfirmServer').checked;
+
+    autoStateServer.running = true;
+    autoStateServer.abort = false;
+    setAutoRunningUIServer(true);
+
+    let anyFailure = false;
+
+    for(let i=0; i<ALL_COMBOS.length; i++){
+      if(autoStateServer.abort) break;
+      const combo = ALL_COMBOS[i];
+      $('lux').value = combo.lux; $('pose').value = combo.pose; $('device').value = combo.device;
+      $('scenarioTag').textContent = scenarioLabel();
+
+      updateAutoProgressServer(i, 0, trialsPerScenario, 'Menyiapkan skenario…');
+
+      if(manualConfirm){
+        updateAutoProgressServer(i, 0, trialsPerScenario, `Menunggu konfirmasi — atur kondisi fisik (cahaya/pose/perangkat) sesuai skenario "${comboLabel(combo)}" lalu klik "Lanjut".`);
+        $('btnAutoNextServer').disabled = false;
+        const proceed = await waitForNextOrAbortServer();
+        $('btnAutoNextServer').disabled = true;
+        if(!proceed || autoStateServer.abort) break;
+      }
+
+      for(let t=1; t<=trialsPerScenario; t++){
+        if(autoStateServer.abort) break;
+        updateAutoProgressServer(i, t, trialsPerScenario, `Menjalankan trial ${t}/${trialsPerScenario}…`);
+        const result = await runOneServerTrial();
+        if(!result.ok) anyFailure = true;
+        if(gapMs>0) await sleep(gapMs);
+      }
+    }
+
+    const finishedAll = !autoStateServer.abort;
+    autoStateServer.running = false;
+    autoStateServer.abort = false;
+    setAutoRunningUIServer(false);
+
+    if(finishedAll){
+      updateAutoProgressServer(ALL_COMBOS.length, 0, 0,
+        anyFailure
+          ? `Selesai — 36 skenario × ${trialsPerScenario} trial dijalankan (ada trial yang gagal/tidak tercatat, periksa status di atas).`
+          : `Selesai — 36 skenario × ${trialsPerScenario} trial sisi server berhasil dijalankan.`);
+    } else {
+      $('autoStatusMsgServer').textContent = 'Otomatisasi sisi server dihentikan sebelum selesai.';
+    }
+  });
+
+  renderScenarioGridServer(-1, 0);
 
 })();
 </script>
