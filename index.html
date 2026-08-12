@@ -1181,13 +1181,33 @@
         fd.append('image', blob, 'frame.jpg');
         const t0 = performance.now();
         const resp = await fetch(url, {method:'POST', body:fd});
-        await resp.text().catch(()=>null);
+        const bodyText = await resp.text().catch(()=>null);
         const t1 = performance.now();
         const totalMs = t1-t0;
-        logServerTrial('API Sungguhan', payloadKb, 0, totalMs, 0, 0, totalMs);
-        $('serverTestStatus').textContent = `Selesai — status HTTP ${resp.status}, total ${totalMs.toFixed(1)} ms.`;
+
+        if(!resp.ok){
+          // Status bukan 2xx (mis. 404 salah route, 500 error server) — JANGAN
+          // dicatat ke log, karena akan mengotori rata-rata dengan angka waktu
+          // yang tidak merepresentasikan pemrosesan sungguhan.
+          $('serverTestStatus').innerHTML =
+            `<span style="color:#dc2626;font-weight:600;">Gagal — status HTTP ${resp.status}.</span> `+
+            `Endpoint tidak merespons dengan benar (periksa URL/route). Total waktu tempuh: ${totalMs.toFixed(1)} ms — tidak dicatat ke tabel.`;
+        } else {
+          let validJson = false;
+          try{
+            const parsed = JSON.parse(bodyText);
+            // Validasi minimal: respons API deteksi wajah kita mengembalikan status:'ok'
+            validJson = parsed && parsed.status === 'ok';
+          } catch(_e){ /* bukan JSON valid */ }
+
+          logServerTrial('API Sungguhan', payloadKb, 0, totalMs, 0, 0, totalMs);
+          $('serverTestStatus').innerHTML = validJson
+            ? `<span style="color:#16a34a;font-weight:600;">Selesai — status HTTP ${resp.status} (respons valid).</span> Total ${totalMs.toFixed(1)} ms.`
+            : `<span style="color:#d97706;font-weight:600;">Selesai — status HTTP ${resp.status}, tapi body respons bukan JSON {status:'ok'} yang diharapkan.</span> Total ${totalMs.toFixed(1)} ms. Periksa apakah endpoint benar-benar API deteksi wajah ini.`;
+        }
       } catch(e){
-        $('serverTestStatus').textContent = 'Gagal menghubungi server: ' + e.message + ' (periksa URL, CORS, atau koneksi).';
+        $('serverTestStatus').innerHTML =
+          `<span style="color:#dc2626;font-weight:600;">Gagal menghubungi server:</span> ${e.message} (periksa URL, CORS, atau koneksi).`;
       }
     } else {
       const payloadKb = parseFloat($('payloadKb').value) || 0;
