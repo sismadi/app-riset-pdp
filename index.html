@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instrumen Komparasi OpenCV.js vs face-api.js — Fase 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12161A;
+    --panel:#1A2025;
+    --panel-2:#20272D;
+    --line:#2B333A;
+    --text:#E7EAEC;
+    --muted:#8B959C;
+    --amber:#E8A33D;   /* OpenCV channel */
+    --cyan:#4FB4C7;    /* face-api channel */
+    --green:#6FBF73;
+    --red:#E2665B;
+    --mono:'IBM Plex Mono', monospace;
+    --sans:'IBM Plex Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); padding:24px; line-height:1.5;
+  }
+  .wrap{max-width:1180px; margin:0 auto;}
+  header{
+    border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:22px;
+    display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;
+  }
+  header .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:var(--muted); text-transform:uppercase;
+  }
+  header h1{margin:4px 0 6px; font-size:22px; font-weight:600;}
+  header p{margin:0; color:var(--muted); font-size:13px; max-width:640px;}
+  .badges{display:flex; gap:8px; flex-wrap:wrap;}
+  .badge{
+    font-family:var(--mono); font-size:11px; padding:4px 9px; border-radius:3px;
+    border:1px solid var(--line); color:var(--muted);
+  }
+  .badge.opencv{border-color:var(--amber); color:var(--amber);}
+  .badge.faceapi{border-color:var(--cyan); color:var(--cyan);}
+
+  section{margin-bottom:22px;}
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:18px;
+  }
+  h2{
+    font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
+    margin:0 0 14px; font-family:var(--mono); display:flex; align-items:center; gap:8px;
+  }
+  h2::before{content:''; width:14px; height:2px; background:var(--line); display:inline-block;}
+
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
+  @media(max-width:820px){ .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;} }
+
+  label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px;}
+  select, input[type=text], input[type=number]{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:8px 10px; border-radius:4px; font-family:var(--sans); font-size:13px;
+  }
+  .field{margin-bottom:12px;}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+
+  button{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    padding:9px 16px; border-radius:4px; font-family:var(--sans); font-size:13px; font-weight:500;
+    cursor:pointer; transition:border-color .15s;
+  }
+  button:hover{border-color:var(--muted);}
+  button.primary{background:var(--amber); color:#1A1204; border-color:var(--amber); font-weight:600;}
+  button.primary:hover{opacity:.9;}
+  button.secondary{background:var(--cyan); color:#0B2429; border-color:var(--cyan); font-weight:600;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+
+  .camera-area{display:grid; grid-template-columns:1fr 340px; gap:16px;}
+  @media(max-width:900px){ .camera-area{grid-template-columns:1fr;} }
+  .video-box{position:relative; background:#000; border-radius:6px; overflow:hidden; border:1px solid var(--line); aspect-ratio:4/3;}
+  video, canvas{position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;}
+  .video-box .tag{
+    position:absolute; bottom:8px; left:8px; font-family:var(--mono); font-size:11px;
+    background:rgba(0,0,0,.55); padding:3px 8px; border-radius:3px; color:var(--muted);
+  }
+
+  .status-line{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:8px;}
+  .status-line span{color:var(--text);}
+
+  .channels{display:flex; flex-direction:column; gap:12px;}
+  .channel{
+    border:1px solid var(--line); border-radius:6px; padding:12px; background:var(--panel-2);
+  }
+  .channel .ch-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .channel.opencv .ch-head{color:var(--amber);}
+  .channel.faceapi .ch-head{color:var(--cyan);}
+  .ch-head .name{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.05em;}
+  .meter{height:10px; background:var(--panel); border-radius:3px; overflow:hidden; border:1px solid var(--line);}
+  .meter .fill{height:100%; width:0%; transition:width .2s;}
+  .channel.opencv .fill{background:var(--amber);}
+  .channel.faceapi .fill{background:var(--cyan);}
+  .ch-metrics{display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; margin-top:10px; font-family:var(--mono); font-size:11px; color:var(--muted);}
+  .ch-metrics b{color:var(--text); font-weight:600;}
+
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px;}
+  th,td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  th{color:var(--muted); font-weight:500; text-transform:uppercase; font-size:10px; letter-spacing:.05em;}
+  tbody tr:hover{background:var(--panel-2);}
+  .scroll-y{max-height:220px; overflow-y:auto;}
+  .correct{color:var(--green);}
+  .incorrect{color:var(--red);}
+
+  .foot-note{
+    font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:14px; margin-top:26px;
+  }
+  .foot-note code{font-family:var(--mono); background:var(--panel-2); padding:1px 5px; border-radius:3px;}
+
+  .caution{
+    border:1px solid #4A3B1E; background:#241E12; color:#E0C48F; border-radius:5px;
+    padding:10px 12px; font-size:12px; margin-bottom:16px;
+  }
+  .export-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
+
+  .auto-panel{border:1px solid var(--line); border-radius:6px; background:var(--panel-2); padding:14px; margin-top:14px;}
+  .auto-controls{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:12px;}
+  @media(max-width:820px){ .auto-controls{grid-template-columns:1fr;} }
+  .checkline{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);}
+  .checkline input{width:auto;}
+  .progress-outer{height:16px; background:var(--panel); border:1px solid var(--line); border-radius:4px; overflow:hidden; margin-top:10px;}
+  .progress-inner{height:100%; width:0%; background:linear-gradient(90deg, var(--amber), var(--cyan)); transition:width .25s;}
+  .progress-text{font-family:var(--mono); font-size:12px; color:var(--text); margin-top:8px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;}
+  .progress-text .muted{color:var(--muted);}
+  .progress-status{font-family:var(--mono); font-size:12px; color:var(--green); margin-top:4px; min-height:16px;}
+  .scenario-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(74px,1fr)); gap:4px; margin-top:12px;}
+  .scenario-cell{
+    font-family:var(--mono); font-size:9px; text-align:center; padding:5px 2px; border-radius:3px;
+    border:1px solid var(--line); background:var(--panel); color:var(--muted); line-height:1.3;
+  }
+  .scenario-cell.done{border-color:var(--green); color:var(--green);}
+  .scenario-cell.active{border-color:var(--amber); color:var(--amber); background:#241E12;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow">Fase 1 · Comparative Benchmarking Framework</div>
+      <h1>Instrumen Komparasi Performa: OpenCV.js vs face-api.js</h1>
+      <p>Pengujian client-side terkontrol untuk mengisi kekosongan data komparatif yang dirujuk pada abstrak dan rumusan masalah PICOT — sebagai pelengkap desain faktorial 36 skenario yang sudah dijalankan pada arsitektur MediaPipe.</p>
+    </div>
+    <div class="badges">
+      <span class="badge opencv">● OpenCV.js — Haar+LBP+Cosine</span>
+      <span class="badge faceapi">● face-api.js — TinyFaceDetector+128D</span>
+    </div>
+  </header>
+
+  <div class="caution">
+    <b>Catatan metodologis:</b> Instrumen ini adalah eksperimen Fase 1 yang berdiri sendiri (bukan bagian dari 36 skenario MediaPipe yang telah selesai). Gunakan tab skenario di bawah untuk menandai kondisi uji (cahaya, pose, tier perangkat) secara manual pada tiap sesi pengambilan data, agar hasil dapat dikelompokkan setara dengan desain faktorial pada proposal.
+  </div>
+
+  <section class="panel">
+    <h2>1 · Penanda Skenario Pengujian</h2>
+    <div class="grid-3">
+      <div class="field">
+        <label for="lux">Kondisi Pencahayaan (lux)</label>
+        <select id="lux">
+          <option value="100">Rendah (~100 lux)</option>
+          <option value="300" selected>Sedang (~300 lux)</option>
+          <option value="500">Tinggi (~500 lux)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pose">Sudut Pose Wajah</label>
+        <select id="pose">
+          <option value="0" selected>0°</option>
+          <option value="15">15°</option>
+          <option value="30">30°</option>
+          <option value="45">45°</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="device">Tier Perangkat</label>
+        <select id="device">
+          <option value="low">Low-end</option>
+          <option value="mid" selected>Mid-range</option>
+          <option value="high">High-end</option>
+        </select>
+      </div>
+    </div>
+    <div class="status-line">Skenario aktif: <span id="scenarioTag">300lux · 0° · mid-range</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>2 · Kamera & Mesin Deteksi</h2>
+    <div class="camera-area">
+      <div>
+        <div class="video-box">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="overlay"></canvas>
+          <span class="tag" id="camTag">kamera belum aktif</span>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="primary" id="btnStartCam">Aktifkan Kamera</button>
+          <button id="btnStopCam" disabled>Matikan Kamera</button>
+          <span class="status-line" id="modelStatus">Status model: menunggu…</span>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div class="checkline"><input type="checkbox" id="liveTrackToggle" checked><label for="liveTrackToggle" style="margin:0;">Live tracking (box &amp; mask mengikuti wajah)</label></div>
+          <div class="checkline"><input type="checkbox" id="liveOcvBox" checked><label for="liveOcvBox" style="margin:0; color:var(--amber);">Box OpenCV</label></div>
+          <div class="checkline"><input type="checkbox" id="liveFapBox" checked><label for="liveFapBox" style="margin:0; color:var(--cyan);">Box + Mask face-api</label></div>
+          <select id="liveInterval" style="width:auto;">
+            <option value="120">Interval 120ms</option>
+            <option value="200" selected>Interval 200ms</option>
+            <option value="400">Interval 400ms</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="channels">
+        <div class="channel opencv">
+          <div class="ch-head"><span class="name">OPENCV.JS</span><span id="ocvLat">— ms</span></div>
+          <div class="meter"><div class="fill" id="ocvBar"></div></div>
+          <div class="ch-metrics">
+            <div>Latensi: <b id="ocvLatV">–</b></div>
+            <div>FPS-eq: <b id="ocvFpsV">–</b></div>
+            <div>Memori: <b id="ocvMemV">–</b></div>
+            <div>N Uji: <b id="ocvCountV">0</b></div>
+          </div>
+        </div>
+        <div class="channel faceapi">
+          <div class="ch-head"><span class="name">FACE-API.JS</span><span id="fapLat">— ms</span></div>
+          <div class="meter"><div class="fill" id="fapBar"></div></div>
+          <div class="ch-metrics">
+            <div>Latensi: <b id="fapLatV">–</b></div>
+            <div>FPS-eq: <b id="fapFpsV">–</b></div>
+            <div>Memori: <b id="fapMemV">–</b></div>
+            <div>N Uji: <b id="fapCountV">0</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>3 · Pendaftaran Wajah (Enrollment)</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="enrollName">Nama Identitas</label>
+        <input type="text" id="enrollName" placeholder="mis. Mahasiswa_01">
+      </div>
+      <div class="field">
+        <label for="enrollSamples">Jumlah Sampel</label>
+        <select id="enrollSamples">
+          <option value="5">5 frame</option>
+          <option value="10" selected>10 frame</option>
+          <option value="15">15 frame</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <button class="primary" id="btnEnroll" disabled>Enroll ke Kedua Mesin</button>
+      <button id="btnClearDB">Bersihkan Database</button>
+      <span class="status-line" id="enrollStatus"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>4 · Pengujian & Pencatatan Trial</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="expectedId">Identitas yang Diharapkan (Ground Truth)</label>
+        <select id="expectedId">
+          <option value="__unknown__">Tidak Dikenal (Unknown)</option>
+        </select>
+      </div>
+      <div class="field" style="display:flex; align-items:flex-end;">
+        <button class="secondary" id="btnRunTest" disabled style="width:100%;">Jalankan Uji (Kedua Mesin)</button>
+      </div>
+    </div>
+
+    <div class="scroll-y">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Mesin</th><th>Skenario</th><th>Prediksi</th><th>Ground Truth</th><th>Confidence</th><th>Latensi(ms)</th><th>Benar?</th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+
+    <div class="auto-panel">
+      <h2 style="margin-bottom:10px;">4B · Jalankan 36 Skenario Otomatis (3 Lux × 4 Pose × 3 Perangkat)</h2>
+      <div class="auto-controls">
+        <div class="field" style="margin-bottom:0;">
+          <label for="autoTrials">Trial per Skenario</label>
+          <select id="autoTrials">
+            <option value="1">1 trial</option>
+            <option value="3" selected>3 trial</option>
+            <option value="5">5 trial</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="autoGap">Jeda Antar-trial (ms)</label>
+          <input type="number" id="autoGap" value="400" min="0" step="100">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>&nbsp;</label>
+          <div class="checkline">
+            <input type="checkbox" id="autoManualConfirm" checked>
+            <label for="autoManualConfirm" style="margin:0;">Jeda konfirmasi manual sebelum tiap skenario (agar cahaya/pose/perangkat benar-benar diubah secara fisik)</label>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="primary" id="btnStartAuto" disabled>▶ Mulai 36 Skenario Otomatis</button>
+        <button id="btnAutoNext" disabled>Lanjut ke Skenario Berikutnya →</button>
+        <button id="btnStopAuto" disabled>■ Hentikan</button>
+        <span class="status-line">Ground truth memakai pilihan "Identitas yang Diharapkan" di atas, berlaku untuk seluruh sesi otomatis.</span>
+      </div>
+
+      <div class="progress-outer"><div class="progress-inner" id="autoProgressBar"></div></div>
+      <div class="progress-text">
+        <span>Skenario: <b id="autoProgressCount">0/36</b> (<span id="autoProgressPct">0%</span>)</span>
+        <span class="muted" id="autoProgressLabel">belum dimulai</span>
+        <span class="muted">Trial: <b id="autoProgressTrial">0/0</b></span>
+      </div>
+      <div class="progress-status" id="autoStatusMsg"></div>
+      <div class="scenario-grid" id="autoScenarioGrid"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>5 · Ringkasan Agregat per Mesin</h2>
+    <table>
+      <thead>
+        <tr><th>Mesin</th><th>N</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Avg Latensi(ms)</th><th>Avg FPS-eq</th><th>Avg Memori(MB)</th></tr>
+      </thead>
+      <tbody id="summaryBody">
+        <tr><td colspan="8" style="color:var(--muted);">Belum ada data uji.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:20px;">Ringkasan per Skenario × Mesin</h2>
+    <div class="scroll-y">
+      <table>
+        <thead>
+          <tr><th>Skenario</th><th>Mesin</th><th>N</th><th>Precision</th><th>Recall</th><th>F1</th><th>Avg Latensi(ms)</th></tr>
+        </thead>
+        <tbody id="scenarioSummaryBody">
+          <tr><td colspan="7" style="color:var(--muted);">Belum ada data uji.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="export-row">
+      <button id="btnExportCsv">Unduh Log Mentah (CSV)</button>
+      <button id="btnExportJson">Unduh Log Mentah (JSON)</button>
+      <button id="btnExportSummary">Unduh Ringkasan (CSV)</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>6 · Perbandingan Pemrosesan Sisi Server vs Sisi Client</h2>
+    <div class="status-line" style="margin-bottom:12px;">
+      Sisi client (OpenCV.js &amp; face-api.js di atas) memproses gambar langsung di peramban tanpa mengirim data ke luar perangkat. Bagian ini mengukur/mengestimasi jalur sisi server: gambar diunggah ke API eksternal, diproses di server, lalu hasil dikirim kembali — untuk dibandingkan dengan latensi client yang sudah tercatat.
+    </div>
+
+    <div class="grid-4" style="margin-bottom:6px;">
+      <div class="field" style="margin-bottom:0;">
+        <label for="serverMode">Mode Pengujian Server</label>
+        <select id="serverMode">
+          <option value="real">Panggil API Server Sungguhan</option>
+          <option value="sim" selected>Simulasi Berdasarkan Parameter Jaringan</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0;" id="serverUrlField">
+        <label for="serverUrl">Endpoint URL (POST, field="image")</label>
+        <input type="text" id="serverUrl" placeholder="https://api.contoh.id/deteksi-wajah">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label for="payloadKb">Ukuran Payload Gambar (KB)</label>
+        <input type="number" id="payloadKb" value="45" min="1" step="1">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>&nbsp;</label>
+        <button id="btnComputePayload" style="width:100%;">Hitung dari Frame Saat Ini</button>
+      </div>
+    </div>
+
+    <div class="grid-4" id="simParamsRow">
+      <div class="field" style="margin-bottom:0;">
+        <label for="netRtt">Latensi Jaringan RTT (ms)</label>
+        <input type="number" id="netRtt" value="60" min="0" step="5">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label for="upBw">Bandwidth Unggah (Mbps)</label>
+        <input type="number" id="upBw" value="10" min="0.1" step="0.5">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label for="downBw">Bandwidth Unduh (Mbps)</label>
+        <input type="number" id="downBw" value="20" min="0.1" step="0.5">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label for="srvProc">Estimasi Waktu Proses Server (ms)</label>
+        <input type="number" id="srvProc" value="80" min="0" step="5">
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:6px;">
+      <button class="primary" id="btnRunServerTest" disabled>▶ Jalankan Uji Sisi Server</button>
+      <span class="status-line" id="serverTestStatus">Aktifkan kamera terlebih dahulu untuk mengambil frame uji.</span>
+    </div>
+
+    <div class="scroll-y" style="margin-top:12px;">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Mode</th><th>Skenario</th><th>Payload(KB)</th><th>Upload(ms)</th><th>RTT(ms)</th><th>Proses Server(ms)</th><th>Download(ms)</th><th>Total Server(ms)</th></tr>
+        </thead>
+        <tbody id="serverLogBody">
+          <tr><td colspan="9" style="color:var(--muted);">Belum ada data uji server.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 style="margin-top:20px;">Ringkasan Perbandingan Client vs Server</h2>
+    <table>
+      <thead>
+        <tr><th>Jalur Pemrosesan</th><th>N</th><th>Avg Latensi/Total(ms)</th><th>Selisih vs Client Tercepat</th><th>Rasio</th></tr>
+      </thead>
+      <tbody id="serverCompareBody">
+        <tr><td colspan="5" style="color:var(--muted);">Belum cukup data — jalankan trial client (bagian 4) dan uji server di atas.</td></tr>
+      </tbody>
+    </table>
+    <div class="foot-note" style="margin-top:10px;">
+      Model estimasi simulasi: <code>Total ≈ RTT + (Ukuran Payload × 8 / Bandwidth Unggah) + Waktu Proses Server + (Ukuran Respons × 8 / Bandwidth Unduh)</code>, dengan ukuran respons diasumsikan kecil (~2 KB berupa JSON koordinat/label). Mode "API Sungguhan" mengukur waktu tempuh <em>fetch()</em> end-to-end secara langsung dari browser ke endpoint yang dikonfigurasi. Perbandingan ini menyoroti trade-off klasik: pemrosesan client menghindari overhead jaringan dan menjaga data tetap di perangkat (lebih privat), sedangkan pemrosesan server dapat memanfaatkan komputasi lebih besar namun bergantung pada kondisi jaringan dan konsumsi bandwidth.
+    </div>
+
+    <div class="export-row">
+      <button id="btnExportServerCsv">Unduh Log Server (CSV)</button>
+    </div>
+  </section>
+
+  <div class="foot-note">
+    Pipeline OpenCV.js: <code>Haar Cascade → wajah terbesar → LBP histogram 100×100 → cosine similarity</code> (konsisten dengan instrumen pilot sebelumnya). Pipeline face-api.js: <code>TinyFaceDetector → 68-point landmarks → 128-D descriptor → euclidean distance</code>. Metrik precision/recall dihitung sebagai tugas verifikasi identitas: benar jika prediksi cocok dengan ground truth (termasuk penolakan yang tepat untuk kondisi "Tidak Dikenal"). Data tidak disimpan permanen di peramban — unduh CSV/JSON setiap sesi untuk diarsipkan dan dianalisis statistik (mis. ANOVA, η²) di luar instrumen ini.
+  </div>
+
+</div>
+
+<script src="https://docs.opencv.org/4.x/opencv.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const video = $('video'), overlay = $('overlay');
+  const octx = overlay.getContext('2d');
+
+  let ocvReady=false, fapReady=false, faceCascade=null;
+  let stream=null;
+  let db = { opencv: [], faceapi: [] }; // {name, descriptor}
+  let log = []; // trial records
+
+  const FAP_MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+
+  function scenarioTag(){
+    return `${$('lux').value}lux_${$('pose').value}deg_${$('device').value}`;
+  }
+  function scenarioLabel(){
+    return `${$('lux').value}lux · ${$('pose').value}° · ${$('device').value}`;
+  }
+  ['lux','pose','device'].forEach(id=>{
+    $(id).addEventListener('change', ()=> $('scenarioTag').textContent = scenarioLabel());
+  });
+
+  function setStatus(msg){ $('modelStatus').textContent = 'Status model: ' + msg; }
+
+  // ---------- Load OpenCV.js ----------
+  function onOpenCvReady(){
+    fetch('https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml')
+      .then(r=>r.arrayBuffer())
+      .then(buf=>{
+        cv.FS_createDataFile('/', 'haar.xml', new Uint8Array(buf), true, false, false);
+        faceCascade = new cv.CascadeClassifier();
+        faceCascade.load('haar.xml');
+        ocvReady = true;
+        checkReady();
+      });
+  }
+  // opencv.js calls Module.onRuntimeInitialized; poll as fallback
+  let ocvPoll = setInterval(()=>{
+    if (window.cv && cv.Mat){ clearInterval(ocvPoll); onOpenCvReady(); }
+  }, 300);
+
+  // ---------- Load face-api.js ----------
+  async function loadFaceApi(){
+    await faceapi.nets.tinyFaceDetector.loadFromUri(FAP_MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(FAP_MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(FAP_MODEL_URL);
+    fapReady = true;
+    checkReady();
+  }
+  loadFaceApi();
+
+  function checkReady(){
+    if (ocvReady && fapReady){
+      setStatus('kedua mesin siap');
+      $('btnStartCam').disabled = false;
+    } else {
+      setStatus((ocvReady?'OpenCV ✓ ':'OpenCV… ') + (fapReady?'face-api ✓':'face-api…'));
+    }
+  }
+  $('btnStartCam').disabled = true;
+
+  // ---------- Camera ----------
+  $('btnStartCam').addEventListener('click', async ()=>{
+    stream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480}});
+    video.srcObject = stream;
+    await video.play();
+    overlay.width = video.videoWidth || 640;
+    overlay.height = video.videoHeight || 480;
+    $('camTag').textContent = 'kamera aktif';
+    $('btnStartCam').disabled = true;
+    $('btnStopCam').disabled = false;
+    $('btnEnroll').disabled = false;
+    $('btnRunTest').disabled = false;
+    $('btnStartAuto').disabled = false;
+    $('btnRunServerTest').disabled = false;
+    $('serverTestStatus').textContent = 'Kamera aktif — siap menjalankan uji sisi server.';
+    if($('liveTrackToggle').checked) startLiveTrack();
+  });
+  $('btnStopCam').addEventListener('click', ()=>{
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+    stopLiveTrack();
+    $('camTag').textContent = 'kamera belum aktif';
+    $('btnStartCam').disabled = false;
+    $('btnStopCam').disabled = true;
+    $('btnEnroll').disabled = true;
+    $('btnRunTest').disabled = true;
+    $('btnStartAuto').disabled = true;
+    $('btnRunServerTest').disabled = true;
+    $('serverTestStatus').textContent = 'Aktifkan kamera terlebih dahulu untuk mengambil frame uji.';
+    if(autoState.running) stopAutomation();
+  });
+
+  function grabCanvas(){
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+    return c;
+  }
+
+  // ---------- OpenCV: detect + LBP descriptor ----------
+  function ocvDetectAndDescribe(canvasEl){
+    const src = cv.imread(canvasEl);
+    const gray = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    const faces = new cv.RectVector();
+    faceCascade.detectMultiScale(gray, faces, 1.1, 4, 0);
+    let result = null;
+    if (faces.size() > 0){
+      // pick largest
+      let best=0, bestArea=0;
+      for(let i=0;i<faces.size();i++){
+        const r=faces.get(i); const area=r.width*r.height;
+        if(area>bestArea){bestArea=area; best=i;}
+      }
+      const r = faces.get(best);
+      const roi = gray.roi(r);
+      const resized = new cv.Mat();
+      cv.resize(roi, resized, new cv.Size(100,100));
+      const descriptor = lbpHistogram(resized);
+      result = { box:{x:r.x,y:r.y,w:r.width,h:r.height}, descriptor };
+      roi.delete(); resized.delete();
+    }
+    src.delete(); gray.delete(); faces.delete();
+    return result;
+  }
+
+  function lbpHistogram(mat){
+    // mat: 100x100 grayscale cv.Mat
+    const w=mat.cols, h=mat.rows;
+    const data = mat.data; // Uint8Array, single channel
+    const hist = new Array(256).fill(0);
+    for(let y=1;y<h-1;y++){
+      for(let x=1;x<w-1;x++){
+        const c = data[y*w+x];
+        let code=0;
+        const nb = [
+          data[(y-1)*w+(x-1)], data[(y-1)*w+x], data[(y-1)*w+(x+1)],
+          data[y*w+(x+1)], data[(y+1)*w+(x+1)], data[(y+1)*w+x],
+          data[(y+1)*w+(x-1)], data[y*w+(x-1)]
+        ];
+        for(let b=0;b<8;b++){ if(nb[b] >= c) code |= (1<<b); }
+        hist[code]++;
+      }
+    }
+    const sum = hist.reduce((a,b)=>a+b,0) || 1;
+    return hist.map(v=>v/sum);
+  }
+
+  function cosineSim(a,b){
+    let dot=0, na=0, nb=0;
+    for(let i=0;i<a.length;i++){ dot+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; }
+    if(na===0||nb===0) return 0;
+    return dot/(Math.sqrt(na)*Math.sqrt(nb));
+  }
+
+  function ocvMatch(descriptor){
+    let bestName=null, bestScore=-1;
+    for(const entry of db.opencv){
+      const s = cosineSim(descriptor, entry.descriptor);
+      if(s>bestScore){ bestScore=s; bestName=entry.name; }
+    }
+    const THRESH = 0.85;
+    return bestScore >= THRESH ? {name:bestName, confidence:bestScore} : {name:null, confidence:bestScore<0?0:bestScore};
+  }
+
+  // ---------- face-api ----------
+  async function fapDetectAndDescribe(canvasEl){
+    const det = await faceapi.detectSingleFace(canvasEl, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks().withFaceDescriptor();
+    if(!det) return null;
+    return { box:det.detection.box, descriptor:det.descriptor };
+  }
+
+  function fapMatch(descriptor){
+    let bestName=null, bestDist=Infinity;
+    for(const entry of db.faceapi){
+      const d = faceapi.euclideanDistance(descriptor, entry.descriptor);
+      if(d<bestDist){ bestDist=d; bestName=entry.name; }
+    }
+    const THRESH = 0.6;
+    const confidence = Math.max(0, 1 - bestDist);
+    return bestDist <= THRESH ? {name:bestName, confidence} : {name:null, confidence};
+  }
+
+  function memMB(){
+    if(performance.memory) return (performance.memory.usedJSHeapSize/1e6).toFixed(1);
+    return null;
+  }
+
+  // ---------- Live Tracking: box & mask mengikuti wajah pada overlay ----------
+  let liveTrackRunning = false;
+  let liveTrackTimer = null;
+
+  function clearOverlay(){
+    octx.clearRect(0, 0, overlay.width, overlay.height);
+  }
+
+  function drawOcvBox(box){
+    octx.strokeStyle = '#E8A33D';
+    octx.lineWidth = 3;
+    octx.strokeRect(box.x, box.y, box.w, box.h);
+    octx.fillStyle = '#E8A33D';
+    octx.font = 'bold 12px monospace';
+    const ly = box.y > 16 ? box.y - 6 : box.y + box.h + 16;
+    octx.fillText('OPENCV.JS', box.x, ly);
+  }
+
+  function drawFapBoxAndMask(det){
+    const box = det.detection.box;
+    octx.strokeStyle = '#4FB4C7';
+    octx.lineWidth = 3;
+    octx.strokeRect(box.x, box.y, box.width, box.height);
+    octx.fillStyle = '#4FB4C7';
+    octx.font = 'bold 12px monospace';
+    const ly = box.y > 16 ? box.y - 6 : box.y + box.height + 16;
+    octx.fillText('FACE-API.JS', box.x, ly);
+
+    if(det.landmarks){
+      const pts = det.landmarks.positions;
+      const jaw = pts.slice(0,17);
+      const rightBrow = pts.slice(17,22);
+      const leftBrow = pts.slice(22,27);
+      const maskPts = [...jaw, ...leftBrow.slice().reverse(), ...rightBrow.slice().reverse()];
+      octx.beginPath();
+      maskPts.forEach((p,i)=>{ if(i===0) octx.moveTo(p.x,p.y); else octx.lineTo(p.x,p.y); });
+      octx.closePath();
+      octx.fillStyle = 'rgba(79,180,199,0.22)';
+      octx.fill();
+      octx.strokeStyle = 'rgba(79,180,199,0.7)';
+      octx.lineWidth = 1;
+      octx.stroke();
+      octx.fillStyle = '#4FB4C7';
+      pts.forEach(p=>{ octx.beginPath(); octx.arc(p.x,p.y,1.3,0,2*Math.PI); octx.fill(); });
+    }
+  }
+
+  async function liveTrackTick(){
+    if(!liveTrackRunning) return;
+    const intervalMs = parseInt($('liveInterval').value,10) || 200;
+    try{
+      clearOverlay();
+      if(video.videoWidth){
+        const c = grabCanvas();
+        if($('liveOcvBox').checked && ocvReady){
+          const r = ocvDetectAndDescribe(c);
+          if(r) drawOcvBox(r.box);
+        }
+        if($('liveFapBox').checked && fapReady){
+          const det = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+          if(det) drawFapBoxAndMask(det);
+        }
+      }
+    } catch(e){ /* abaikan error frame sesekali, lanjut ke tick berikutnya */ }
+    if(liveTrackRunning) liveTrackTimer = setTimeout(liveTrackTick, intervalMs);
+  }
+
+  function startLiveTrack(){
+    if(liveTrackRunning) return;
+    liveTrackRunning = true;
+    liveTrackTick();
+  }
+  function stopLiveTrack(){
+    liveTrackRunning = false;
+    if(liveTrackTimer) clearTimeout(liveTrackTimer);
+    liveTrackTimer = null;
+    clearOverlay();
+  }
+  $('liveTrackToggle').addEventListener('change', ()=>{
+    if($('liveTrackToggle').checked && stream) startLiveTrack();
+    else stopLiveTrack();
+  });
+
+  // ---------- Enrollment ----------
+  $('btnEnroll').addEventListener('click', async ()=>{
+    const name = $('enrollName').value.trim();
+    if(!name){ alert('Isi nama identitas terlebih dahulu.'); return; }
+    const n = parseInt($('enrollSamples').value,10);
+    $('enrollStatus').textContent = 'Mengambil sampel…';
+    let ocvDescs=[], fapDescs=[];
+    for(let i=0;i<n;i++){
+      const c = grabCanvas();
+      const ocvR = ocvDetectAndDescribe(c);
+      if(ocvR) ocvDescs.push(ocvR.descriptor);
+      const fapR = await fapDetectAndDescribe(c);
+      if(fapR) fapDescs.push(Array.from(fapR.descriptor));
+      await new Promise(r=>setTimeout(r,150));
+    }
+    if(ocvDescs.length){
+      const avg = averageVector(ocvDescs);
+      db.opencv.push({name, descriptor:avg});
+    }
+    if(fapDescs.length){
+      const avg = averageVector(fapDescs);
+      db.faceapi.push({name, descriptor:Float32Array.from(avg)});
+    }
+    refreshExpectedIdOptions();
+    $('enrollStatus').textContent = `Enrolled "${name}" — OpenCV: ${ocvDescs.length}/${n} sampel, face-api: ${fapDescs.length}/${n} sampel.`;
+  });
+
+  function averageVector(list){
+    const len = list[0].length;
+    const out = new Array(len).fill(0);
+    for(const v of list){ for(let i=0;i<len;i++) out[i]+=v[i]; }
+    return out.map(v=>v/list.length);
+  }
+
+  $('btnClearDB').addEventListener('click', ()=>{
+    db = {opencv:[], faceapi:[]};
+    refreshExpectedIdOptions();
+    $('enrollStatus').textContent = 'Database dibersihkan.';
+  });
+
+  function refreshExpectedIdOptions(){
+    const sel = $('expectedId');
+    const names = Array.from(new Set([...db.opencv.map(e=>e.name), ...db.faceapi.map(e=>e.name)]));
+    sel.innerHTML = '<option value="__unknown__">Tidak Dikenal (Unknown)</option>' +
+      names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  }
+
+  // ---------- Rolling FPS-eq buffers ----------
+  const rolling = { opencv:[], faceapi:[] };
+  function pushRolling(engine, latency){
+    rolling[engine].push(latency);
+    if(rolling[engine].length>10) rolling[engine].shift();
+  }
+  function avgFps(engine){
+    const arr = rolling[engine];
+    if(!arr.length) return null;
+    const avgLat = arr.reduce((a,b)=>a+b,0)/arr.length;
+    return avgLat>0 ? (1000/avgLat) : null;
+  }
+
+  // ---------- Run Test (dipakai tombol manual & otomatisasi) ----------
+  async function runSingleTrial(expected){
+    const scenario = scenarioTag();
+    const c = grabCanvas();
+
+    // OpenCV trial
+    const t0o = performance.now();
+    const ocvR = ocvDetectAndDescribe(c);
+    const t1o = performance.now();
+    const ocvLatency = t1o - t0o;
+    let ocvPred = null, ocvConf = 0;
+    if(ocvR){
+      const m = ocvMatch(ocvR.descriptor);
+      ocvPred = m.name; ocvConf = m.confidence;
+    }
+    const ocvExpectedName = expected === '__unknown__' ? null : expected;
+    const ocvCorrect = (ocvPred === ocvExpectedName);
+    logTrial('OpenCV.js', scenario, ocvPred, expected, ocvConf, ocvLatency, ocvCorrect);
+    pushRolling('opencv', ocvLatency);
+    updateChannelUI('ocv', ocvLatency, avgFps('opencv'), memMB());
+
+    // face-api trial
+    const t0f = performance.now();
+    const fapR = await fapDetectAndDescribe(c);
+    const t1f = performance.now();
+    const fapLatency = t1f - t0f;
+    let fapPred = null, fapConf = 0;
+    if(fapR){
+      const m = fapMatch(fapR.descriptor);
+      fapPred = m.name; fapConf = m.confidence;
+    }
+    const fapExpectedName = expected === '__unknown__' ? null : expected;
+    const fapCorrect = (fapPred === fapExpectedName);
+    logTrial('face-api.js', scenario, fapPred, expected, fapConf, fapLatency, fapCorrect);
+    pushRolling('faceapi', fapLatency);
+    updateChannelUI('fap', fapLatency, avgFps('faceapi'), memMB());
+
+    renderSummary();
+  }
+
+  $('btnRunTest').addEventListener('click', async ()=>{
+    await runSingleTrial($('expectedId').value);
+  });
+
+  // ---------- Otomatisasi 36 Skenario (3 Lux × 4 Pose × 3 Perangkat) ----------
+  const LUX_VALUES = Array.from($('lux').options).map(o=>o.value);
+  const POSE_VALUES = Array.from($('pose').options).map(o=>o.value);
+  const DEVICE_VALUES = Array.from($('device').options).map(o=>o.value);
+
+  function buildScenarioCombos(){
+    const combos = [];
+    for(const lux of LUX_VALUES)
+      for(const pose of POSE_VALUES)
+        for(const device of DEVICE_VALUES)
+          combos.push({lux, pose, device});
+    return combos;
+  }
+  const ALL_COMBOS = buildScenarioCombos(); // 3 x 4 x 3 = 36
+
+  function comboLabel(c){ return `${c.lux}lux · ${c.pose}° · ${c.device}`; }
+  function comboTag(c){ return `${c.lux}lux_${c.pose}deg_${c.device}`; }
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+  const autoState = { running:false, abort:false, nextResolve:null };
+
+  function renderScenarioGrid(activeIdx, doneCount){
+    const cells = ALL_COMBOS.map((c,i)=>{
+      let cls = 'scenario-cell';
+      if(i < doneCount) cls += ' done';
+      if(i === activeIdx) cls += ' active';
+      return `<div class="${cls}" title="${comboLabel(c)}">${i+1}<br>${c.lux}L·${c.pose}°<br>${c.device}</div>`;
+    }).join('');
+    $('autoScenarioGrid').innerHTML = cells;
+  }
+
+  function updateAutoProgress(idx, trialIdx, trialsPerScenario, statusText){
+    const total = ALL_COMBOS.length;
+    const doneScenarios = Math.min(idx, total);
+    const pct = Math.round((doneScenarios/total)*100);
+    $('autoProgressCount').textContent = `${Math.min(idx+1, total)}/${total}`;
+    $('autoProgressPct').textContent = pct + '%';
+    $('autoProgressBar').style.width = pct + '%';
+    $('autoProgressLabel').textContent = idx < total ? comboLabel(ALL_COMBOS[idx]) : 'selesai';
+    $('autoProgressTrial').textContent = `${trialIdx}/${trialsPerScenario}`;
+    $('autoStatusMsg').textContent = statusText || '';
+    renderScenarioGrid(idx, doneScenarios);
+  }
+
+  function waitForNextOrAbort(){
+    return new Promise(resolve=>{
+      autoState.nextResolve = resolve;
+    });
+  }
+
+  $('btnAutoNext').addEventListener('click', ()=>{
+    if(autoState.nextResolve){ autoState.nextResolve(true); autoState.nextResolve=null; }
+  });
+  $('btnStopAuto').addEventListener('click', ()=>{
+    stopAutomation();
+  });
+
+  function stopAutomation(){
+    autoState.abort = true;
+    if(autoState.nextResolve){ autoState.nextResolve(false); autoState.nextResolve=null; }
+  }
+
+  function setAutoRunningUI(running){
+    $('btnStartAuto').disabled = running;
+    $('btnStopAuto').disabled = !running;
+    $('btnAutoNext').disabled = true;
+    $('btnRunTest').disabled = running || !stream;
+    $('lux').disabled = running; $('pose').disabled = running; $('device').disabled = running;
+  }
+
+  $('btnStartAuto').addEventListener('click', async ()=>{
+    if(autoState.running) return;
+    if($('btnRunTest').disabled){
+      alert('Aktifkan kamera dan pastikan minimal satu identitas ter-enroll sebelum menjalankan 36 skenario otomatis.');
+      return;
+    }
+    const trialsPerScenario = parseInt($('autoTrials').value,10) || 1;
+    const gapMs = Math.max(0, parseInt($('autoGap').value,10) || 0);
+    const manualConfirm = $('autoManualConfirm').checked;
+    const expected = $('expectedId').value;
+
+    autoState.running = true;
+    autoState.abort = false;
+    setAutoRunningUI(true);
+    $('btnEnroll').disabled = true;
+
+    for(let i=0; i<ALL_COMBOS.length; i++){
+      if(autoState.abort) break;
+      const combo = ALL_COMBOS[i];
+      $('lux').value = combo.lux; $('pose').value = combo.pose; $('device').value = combo.device;
+      $('scenarioTag').textContent = scenarioLabel();
+
+      updateAutoProgress(i, 0, trialsPerScenario, 'Menyiapkan skenario…');
+
+      if(manualConfirm){
+        updateAutoProgress(i, 0, trialsPerScenario, `Menunggu konfirmasi — atur kondisi fisik (cahaya/pose/perangkat) sesuai skenario "${comboLabel(combo)}" lalu klik "Lanjut".`);
+        $('btnAutoNext').disabled = false;
+        const proceed = await waitForNextOrAbort();
+        $('btnAutoNext').disabled = true;
+        if(!proceed || autoState.abort) break;
+      }
+
+      for(let t=1; t<=trialsPerScenario; t++){
+        if(autoState.abort) break;
+        updateAutoProgress(i, t, trialsPerScenario, `Menjalankan trial ${t}/${trialsPerScenario}…`);
+        await runSingleTrial(expected);
+        if(gapMs>0) await sleep(gapMs);
+      }
+    }
+
+    const finishedAll = !autoState.abort;
+    autoState.running = false;
+    autoState.abort = false;
+    setAutoRunningUI(false);
+    $('btnEnroll').disabled = !stream;
+
+    if(finishedAll){
+      updateAutoProgress(ALL_COMBOS.length, 0, 0, `Selesai — 36 skenario × ${trialsPerScenario} trial berhasil dijalankan.`);
+    } else {
+      $('autoStatusMsg').textContent = 'Otomatisasi dihentikan sebelum selesai.';
+    }
+  });
+
+  renderScenarioGrid(-1, 0);
+
+  function updateChannelUI(prefix, latency, fps, mem){
+    $(prefix+'LatV').textContent = latency.toFixed(1)+' ms';
+    $(prefix+'FpsV').textContent = fps ? fps.toFixed(1) : '–';
+    $(prefix+'MemV').textContent = mem ? mem+' MB' : 'N/A';
+    const barId = prefix==='ocv' ? 'ocvBar' : 'fapBar';
+    const pct = Math.min(100, (latency/500)*100);
+    $(barId).style.width = pct+'%';
+    const latLabelId = prefix==='ocv' ? 'ocvLat' : 'fapLat';
+    $(latLabelId).textContent = latency.toFixed(0)+' ms';
+  }
+
+  function logTrial(engine, scenario, pred, expected, confidence, latency, correct){
+    log.push({
+      idx: log.length+1, engine, scenario, pred: pred||'(tidak terdeteksi)',
+      expected, confidence: confidence.toFixed(3), latency: latency.toFixed(1), correct
+    });
+    const cnt = engine==='OpenCV.js' ? 'ocvCountV' : 'fapCountV';
+    $(cnt).textContent = log.filter(r=>r.engine===engine).length;
+    renderLog();
+  }
+
+  function renderLog(){
+    const rows = log.slice(-30).reverse().map(r=>`
+      <tr>
+        <td>${r.idx}</td>
+        <td>${r.engine}</td>
+        <td>${r.scenario}</td>
+        <td>${r.pred}</td>
+        <td>${r.expected==='__unknown__'?'Unknown':r.expected}</td>
+        <td>${r.confidence}</td>
+        <td>${r.latency}</td>
+        <td class="${r.correct?'correct':'incorrect'}">${r.correct?'✓':'✕'}</td>
+      </tr>`).join('');
+    $('logBody').innerHTML = rows || '<tr><td colspan="8" style="color:var(--muted)">Belum ada data.</td></tr>';
+  }
+
+  function computeMetrics(rows){
+    const n = rows.length;
+    if(!n) return null;
+    let tp=0, fp=0, fn=0, tn=0;
+    for(const r of rows){
+      const isUnknownExpected = r.expected === '__unknown__';
+      const detected = r.pred !== '(tidak terdeteksi)';
+      if(isUnknownExpected){
+        if(!detected || r.correct) tn++; else fp++;
+      } else {
+        if(r.correct) tp++;
+        else if(!detected) fn++;
+        else fp++;
+      }
+    }
+    const precision = (tp+fp)>0 ? tp/(tp+fp) : 0;
+    const recall = (tp+fn)>0 ? tp/(tp+fn) : 0;
+    const f1 = (precision+recall)>0 ? 2*precision*recall/(precision+recall) : 0;
+    const avgLatency = rows.reduce((a,r)=>a+parseFloat(r.latency),0)/n;
+    const avgFpsVal = avgLatency>0 ? 1000/avgLatency : 0;
+    return {n, precision, recall, f1, avgLatency, avgFpsVal};
+  }
+
+  function renderSummary(){
+    const engines = ['OpenCV.js','face-api.js'];
+    const rowsHtml = engines.map(eng=>{
+      const rows = log.filter(r=>r.engine===eng);
+      const m = computeMetrics(rows);
+      if(!m) return `<tr><td>${eng}</td><td colspan="7" style="color:var(--muted)">Belum ada data.</td></tr>`;
+      return `<tr>
+        <td>${eng}</td><td>${m.n}</td>
+        <td>${m.precision.toFixed(3)}</td><td>${m.recall.toFixed(3)}</td><td>${m.f1.toFixed(3)}</td>
+        <td>${m.avgLatency.toFixed(1)}</td><td>${m.avgFpsVal.toFixed(1)}</td>
+        <td>${memMB()||'N/A'}</td>
+      </tr>`;
+    }).join('');
+    $('summaryBody').innerHTML = rowsHtml;
+
+    // per scenario x engine
+    const groups = {};
+    for(const r of log){
+      const key = r.scenario+'|'+r.engine;
+      if(!groups[key]) groups[key]=[];
+      groups[key].push(r);
+    }
+    const keys = Object.keys(groups).sort();
+    const scenRows = keys.map(k=>{
+      const [scenario, engine] = k.split('|');
+      const m = computeMetrics(groups[k]);
+      return `<tr>
+        <td>${scenario}</td><td>${engine}</td><td>${m.n}</td>
+        <td>${m.precision.toFixed(3)}</td><td>${m.recall.toFixed(3)}</td><td>${m.f1.toFixed(3)}</td>
+        <td>${m.avgLatency.toFixed(1)}</td>
+      </tr>`;
+    }).join('');
+    $('scenarioSummaryBody').innerHTML = scenRows || '<tr><td colspan="7" style="color:var(--muted)">Belum ada data uji.</td></tr>';
+  }
+
+  // ---------- Export ----------
+  function downloadBlob(content, filename, type){
+    const blob = new Blob([content], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  $('btnExportCsv').addEventListener('click', ()=>{
+    const header = 'idx,engine,scenario,pred,expected,confidence,latency_ms,correct\n';
+    const rows = log.map(r=>[r.idx,r.engine,r.scenario,r.pred,r.expected,r.confidence,r.latency,r.correct].join(',')).join('\n');
+    downloadBlob(header+rows, 'log-trial-opencv-vs-faceapi.csv', 'text/csv');
+  });
+  $('btnExportJson').addEventListener('click', ()=>{
+    downloadBlob(JSON.stringify(log,null,2), 'log-trial-opencv-vs-faceapi.json', 'application/json');
+  });
+  $('btnExportSummary').addEventListener('click', ()=>{
+    const engines = ['OpenCV.js','face-api.js'];
+    let out = 'engine,n,precision,recall,f1,avg_latency_ms,avg_fps_eq\n';
+    engines.forEach(eng=>{
+      const rows = log.filter(r=>r.engine===eng);
+      const m = computeMetrics(rows);
+      if(m) out += `${eng},${m.n},${m.precision.toFixed(3)},${m.recall.toFixed(3)},${m.f1.toFixed(3)},${m.avgLatency.toFixed(1)},${m.avgFpsVal.toFixed(1)}\n`;
+    });
+    downloadBlob(out, 'ringkasan-opencv-vs-faceapi.csv', 'text/csv');
+  });
+
+  // ---------- Perbandingan Sisi Server vs Sisi Client ----------
+  const serverLog = [];
+
+  function toggleServerModeFields(){
+    const isReal = $('serverMode').value === 'real';
+    $('serverUrlField').style.display = isReal ? '' : 'none';
+    $('simParamsRow').style.display = isReal ? 'none' : '';
+  }
+  $('serverMode').addEventListener('change', toggleServerModeFields);
+  toggleServerModeFields();
+
+  $('btnComputePayload').addEventListener('click', ()=>{
+    if(!stream || !video.videoWidth){
+      alert('Aktifkan kamera terlebih dahulu.');
+      return;
+    }
+    const c = grabCanvas();
+    c.toBlob(blob=>{
+      if(blob){
+        const kb = Math.max(1, Math.round(blob.size/1024));
+        $('payloadKb').value = kb;
+      }
+    }, 'image/jpeg', 0.8);
+  });
+
+  function renderServerLog(){
+    const rows = serverLog.slice(-30).reverse().map(r=>`
+      <tr>
+        <td>${r.idx}</td>
+        <td>${r.mode}</td>
+        <td>${r.scenario}</td>
+        <td>${r.payloadKb}</td>
+        <td>${r.uploadMs}</td>
+        <td>${r.rttMs}</td>
+        <td>${r.serverProcMs}</td>
+        <td>${r.downloadMs}</td>
+        <td><b>${r.totalMs}</b></td>
+      </tr>`).join('');
+    $('serverLogBody').innerHTML = rows || '<tr><td colspan="9" style="color:var(--muted);">Belum ada data uji server.</td></tr>';
+  }
+
+  function logServerTrial(mode, payloadKb, uploadMs, rttMs, serverProcMs, downloadMs, totalMs){
+    serverLog.push({
+      idx: serverLog.length+1, mode, scenario: scenarioTag(),
+      payloadKb: payloadKb.toFixed(1), uploadMs: uploadMs.toFixed(1),
+      rttMs: rttMs.toFixed(1), serverProcMs: serverProcMs.toFixed(1),
+      downloadMs: downloadMs.toFixed(1), totalMs: totalMs.toFixed(1)
+    });
+    renderServerLog();
+    renderServerComparison();
+  }
+
+  function renderServerComparison(){
+    const engines = ['OpenCV.js','face-api.js'];
+    const clientStats = engines.map(eng=>{
+      const rows = log.filter(r=>r.engine===eng);
+      const m = computeMetrics(rows);
+      return {label: 'Client — '+eng, n: m?m.n:0, avg: m?m.avgLatency:null};
+    });
+    let serverAvg = null, serverN = 0;
+    if(serverLog.length){
+      serverN = serverLog.length;
+      serverAvg = serverLog.reduce((a,r)=>a+parseFloat(r.totalMs),0)/serverN;
+    }
+    const rowsData = [...clientStats, {label:'Server (upload → proses → respons)', n: serverN, avg: serverAvg}];
+    const validAvgs = rowsData.filter(r=>r.avg!==null).map(r=>r.avg);
+    const fastest = validAvgs.length ? Math.min(...validAvgs) : null;
+
+    const html = rowsData.map(r=>{
+      if(r.avg===null) return `<tr><td>${r.label}</td><td>${r.n}</td><td colspan="3" style="color:var(--muted);">Belum ada data.</td></tr>`;
+      const delta = fastest!==null ? (r.avg-fastest) : 0;
+      const ratio = fastest!==null && fastest>0 ? (r.avg/fastest) : 1;
+      return `<tr>
+        <td>${r.label}</td><td>${r.n}</td><td>${r.avg.toFixed(1)}</td>
+        <td>${delta>=0 ? '+' : ''}${delta.toFixed(1)} ms</td>
+        <td>${ratio.toFixed(2)}×</td>
+      </tr>`;
+    }).join('');
+    $('serverCompareBody').innerHTML = html;
+  }
+
+  $('btnRunServerTest').addEventListener('click', async ()=>{
+    if(!stream || !video.videoWidth){
+      alert('Aktifkan kamera terlebih dahulu untuk mengambil frame uji.');
+      return;
+    }
+    const mode = $('serverMode').value;
+    $('btnRunServerTest').disabled = true;
+
+    if(mode === 'real'){
+      const url = $('serverUrl').value.trim();
+      if(!url){
+        alert('Isi Endpoint URL API server terlebih dahulu.');
+        $('btnRunServerTest').disabled = false;
+        return;
+      }
+      $('serverTestStatus').textContent = 'Mengirim frame ke server…';
+      try{
+        const c = grabCanvas();
+        const blob = await new Promise(res=>c.toBlob(res,'image/jpeg',0.8));
+        const payloadKb = blob.size/1024;
+        const fd = new FormData();
+        fd.append('image', blob, 'frame.jpg');
+        const t0 = performance.now();
+        const resp = await fetch(url, {method:'POST', body:fd});
+        await resp.text().catch(()=>null);
+        const t1 = performance.now();
+        const totalMs = t1-t0;
+        logServerTrial('API Sungguhan', payloadKb, 0, totalMs, 0, 0, totalMs);
+        $('serverTestStatus').textContent = `Selesai — status HTTP ${resp.status}, total ${totalMs.toFixed(1)} ms.`;
+      } catch(e){
+        $('serverTestStatus').textContent = 'Gagal menghubungi server: ' + e.message + ' (periksa URL, CORS, atau koneksi).';
+      }
+    } else {
+      const payloadKb = parseFloat($('payloadKb').value) || 0;
+      const rtt = parseFloat($('netRtt').value) || 0;
+      const upBw = Math.max(0.1, parseFloat($('upBw').value) || 0.1);
+      const downBw = Math.max(0.1, parseFloat($('downBw').value) || 0.1);
+      const srvProc = parseFloat($('srvProc').value) || 0;
+      const responseKb = 2; // asumsi respons JSON kecil
+      const uploadMs = (payloadKb*8/1000/upBw)*1000;
+      const downloadMs = (responseKb*8/1000/downBw)*1000;
+      const totalMs = rtt + uploadMs + srvProc + downloadMs;
+      logServerTrial('Simulasi', payloadKb, uploadMs, rtt, srvProc, downloadMs, totalMs);
+      $('serverTestStatus').textContent = `Estimasi selesai — total ${totalMs.toFixed(1)} ms.`;
+    }
+    $('btnRunServerTest').disabled = false;
+  });
+
+  $('btnExportServerCsv').addEventListener('click', ()=>{
+    const header = 'idx,mode,scenario,payload_kb,upload_ms,rtt_ms,server_proc_ms,download_ms,total_ms\n';
+    const rows = serverLog.map(r=>[r.idx,r.mode,r.scenario,r.payloadKb,r.uploadMs,r.rttMs,r.serverProcMs,r.downloadMs,r.totalMs].join(',')).join('\n');
+    downloadBlob(header+rows, 'log-perbandingan-server-vs-client.csv', 'text/csv');
+  });
+
+})();
+</script>
+</body>
+</html>
