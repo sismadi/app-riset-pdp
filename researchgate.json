@@ -1,0 +1,92 @@
+{
+  "title": "app-riset-pdp: Client-Side Face Detection Benchmarking Instrument (OpenCV.js vs face-api.js)",
+  "type": "software",
+  "publication_date": "2026-09-09",
+  "abstract": "A self-contained, client-side face detection benchmarking instrument (single HTML/JavaScript page, no build step) comparing two in-browser face detection pipelines — OpenCV.js (Haar Cascade, LBP histogram, cosine similarity, threshold >= 0.85) and face-api.js (TinyFaceDetector, 68-point landmarks, 128-D descriptor, euclidean distance, threshold <= 0.60) — under a controlled 36-scenario factorial design (3 lighting levels x 4 pose angles x 3 device tiers). Provides dual-engine identity enrollment, manual and automated trial capture, live per-engine latency/FPS-equivalent/memory metrics, aggregate and per-scenario precision/recall/F1-score summaries, CSV/JSON export, and a client-vs-server latency comparison module (real API call to the companion project api-riset-pdp on Cloudflare Workers, or network-parameter simulation). All biometric processing runs entirely in the browser (privacy-by-design). Developed to collect data for Sismadi, Manan, & Hartini (2026), 'Inovasi Media ICT Deteksi Wajah untuk Presensi Digital Mahasiswa: Analisis Akurasi dan Performa', ACADEMIA: Jurnal Inovasi Riset Akademik, 6(4), 3400-3408, under the Penelitian Dosen Pemula (PDP) grant at Universitas IPWIJA, Jakarta (n=180 observations per library, 50 student participants, closed-set verification).",
+  "authors": [
+    {
+      "first_name": "Wawan",
+      "last_name": "Sismadi",
+      "orcid": "0009-0007-2685-5663",
+      "institution": "Universitas IPWIJA",
+      "department": "Teknik Informatika",
+      "country": "Indonesia"
+    }
+  ],
+  "license": "MIT",
+  "language": "Indonesian",
+  "doi": "10.5281/figshare.XXXXXXXX",
+  "repository_url": "https://github.com/sismadi/app-riset-pdp",
+  "project_url": "https://sismadi.github.io/app-riset-pdp",
+  "version": "1.0.0",
+  "keywords": [
+    "face detection",
+    "face recognition",
+    "opencv.js",
+    "face-api.js",
+    "client-side computing",
+    "browser-based biometrics",
+    "privacy by design",
+    "digital attendance",
+    "presensi digital",
+    "computer vision",
+    "webgl",
+    "haar cascade",
+    "tinyfacedetector",
+    "biometric verification",
+    "benchmarking instrument",
+    "research instrument",
+    "factorial experiment design",
+    "precision recall f1-score",
+    "latency measurement",
+    "client-server comparison",
+    "Universitas IPWIJA",
+    "Indonesia"
+  ],
+  "research_areas": [
+    "Computer Science",
+    "Computer Vision",
+    "Educational Technology"
+  ],
+  "references": [
+    {
+      "citation": "Sismadi, W., Manan, A., & Hartini, E. F. (2026). Inovasi Media ICT Deteksi Wajah untuk Presensi Digital Mahasiswa: Analisis Akurasi dan Performa. ACADEMIA: Jurnal Inovasi Riset Akademik, 6(4), 3400-3408. https://doi.org/10.51878/academia.v6i4.13792",
+      "type": "article"
+    },
+    {
+      "citation": "Justad, V. M. (2023). face-api.js: A JavaScript face recognition API for the browser [Computer software]. GitHub. https://github.com/justadudewhohacks/face-api.js",
+      "type": "software"
+    },
+    {
+      "citation": "OpenCV.org. (2024). OpenCV.js: Computer vision library for the web. https://docs.opencv.org/4.x/d5/d10/tutorial_js_root.html",
+      "type": "software"
+    },
+    {
+      "citation": "Kamil, M. H. M., Zaini, N., Mazalan, L., & Ahamad, A. H. (2023). Online attendance system based on facial recognition with face mask detection. Multimedia Tools and Applications, 82(22), 34437-34457.",
+      "type": "article"
+    },
+    {
+      "citation": "Kementerian Riset dan Teknologi/Badan Riset dan Inovasi Nasional. (2022). Pedoman penyusunan Tingkat Kesiapterapan Teknologi (TKT). Kemenristek/BRIN.",
+      "type": "report"
+    }
+  ],
+  "related_links": [
+    {
+      "label": "Published Article — ACADEMIA: Jurnal Inovasi Riset Akademik",
+      "url": "https://doi.org/10.51878/academia.v6i4.13792"
+    },
+    {
+      "label": "Instrument — Live Deployment",
+      "url": "https://sismadi.github.io/app-riset-pdp"
+    },
+    {
+      "label": "Source Repository — GitHub",
+      "url": "https://github.com/sismadi/app-riset-pdp"
+    },
+    {
+      "label": "Companion Server-Side API — api-riset-pdp",
+      "url": "https://github.com/sismadi/api-riset-pdp"
+    }
+  ],
+  "notes": "ResearchGate does not have a native JSON deposit API. Use this file as a reference template when filling the manual upload form at https://www.researchgate.net/publication/new. Paste the abstract, keywords, and references directly. Upload the source ZIP (or link the GitHub repository) and set the research type to 'Software'/'Research Data' as appropriate."
+}

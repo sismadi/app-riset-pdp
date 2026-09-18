@@ -1,0 +1,30 @@
+Topic tags untuk sismadi/app-riset-pdp
+Paste satu per satu di: GitHub repo → Settings → Topics
+
+─────────────────────────────────────────
+face-detection
+face-recognition
+opencv-js
+face-api-js
+client-side
+webgl
+computer-vision
+biometrics
+privacy-by-design
+digital-attendance
+presensi-digital
+benchmarking
+research-instrument
+factorial-design
+precision-recall
+latency-measurement
+proof-of-concept
+higher-education
+universitas-ipwija
+indonesia
+─────────────────────────────────────────
+
+Catatan:
+- GitHub maksimal 20 topic tags per repo
+- Gunakan huruf kecil dan tanda hubung (kebab-case)
+- Semua 20 tag di atas sudah dalam format yang diterima GitHub

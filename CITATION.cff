@@ -1,0 +1,70 @@
+cff-version: 1.2.0
+message: "If you use this instrument, please cite it as below."
+type: software
+title: "app-riset-pdp: Instrumen Komparasi Performa OpenCV.js vs face-api.js untuk Presensi Digital Mahasiswa"
+abstract: >
+  Client-side face detection benchmarking instrument built as a single self-contained
+  HTML/JavaScript page. Compares two in-browser face detection pipelines — OpenCV.js
+  (Haar Cascade + LBP histogram + cosine similarity) and face-api.js (TinyFaceDetector +
+  68-point landmarks + 128-D descriptor + euclidean distance) — under a full 36-scenario
+  factorial design (3 lighting levels × 4 pose angles × 3 device tiers). Provides identity
+  enrollment, manual and automated 36-scenario trial capture, live per-engine latency/FPS-eq/
+  memory metrics, aggregate precision/recall/F1-Score reporting, CSV/JSON export of raw and
+  summarized logs, and a client-vs-server latency comparison module that can call a companion
+  API (api-riset-pdp, deployed on Cloudflare Workers) or simulate a server-side pathway from
+  network parameters (RTT, upload/download bandwidth, server processing time). Developed as
+  the data-collection instrument supporting the study "Inovasi Media ICT Deteksi Wajah untuk
+  Presensi Digital Mahasiswa: Analisis Akurasi dan Performa" (Sismadi, Manan, & Hartini, 2026),
+  under the Penelitian Dosen Pemula (PDP) research grant, Universitas IPWIJA, Jakarta.
+authors:
+  - family-names: Sismadi
+    given-names: Wawan
+    orcid: "https://orcid.org/0009-0007-2685-5663"
+    affiliation: "Universitas IPWIJA / PT Sismadi Langit Solusi"
+version: "1.0.0"
+date-released: "2026-09-09"
+doi: "10.6084/m9.figshare.XXXXXXXX"
+license: MIT
+repository-code: "https://github.com/sismadi/app-riset-pdp"
+url: "https://sismadi.github.io/app-riset-pdp"
+keywords:
+  - face detection
+  - face recognition
+  - opencv.js
+  - face-api.js
+  - client-side computing
+  - browser-based biometrics
+  - privacy-by-design
+  - presensi digital
+  - digital attendance
+  - computer vision
+  - webgl
+  - benchmarking instrument
+  - research instrument
+  - factorial experiment design
+  - precision recall f1-score
+  - latency measurement
+  - client-server comparison
+  - higher education
+  - ipwija
+  - indonesia
+preferred-citation:
+  type: article
+  title: "Inovasi Media ICT Deteksi Wajah untuk Presensi Digital Mahasiswa: Analisis Akurasi dan Performa"
+  authors:
+    - family-names: Sismadi
+      given-names: Wawan
+      orcid: "https://orcid.org/0009-0007-2685-5663"
+      affiliation: "Universitas IPWIJA / PT Sismadi Langit Solusi"
+    - family-names: Manan
+      given-names: Abdul
+    - family-names: Hartini
+      given-names: "Estuti Fitri"
+  journal: "ACADEMIA: Jurnal Inovasi Riset Akademik"
+  volume: "6"
+  issue: "4"
+  start: "3400"
+  end: "3408"
+  year: 2026
+  doi: "10.51878/academia.v6i4.13792"
+  url: "https://doi.org/10.51878/academia.v6i4.13792"

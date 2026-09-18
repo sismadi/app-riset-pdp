@@ -1,0 +1,88 @@
+{
+  "title": "app-riset-pdp: Client-Side Face Detection Benchmarking Instrument (OpenCV.js vs face-api.js)",
+  "description": "A self-contained, client-side face detection benchmarking instrument (single HTML/JavaScript page, no build step, no server-side biometric processing) that compares two in-browser face detection pipelines: OpenCV.js (Haar Cascade + LBP histogram + cosine similarity, threshold >= 0.85) and face-api.js (TinyFaceDetector + 68-point landmarks + 128-D descriptor + euclidean distance, threshold <= 0.60), under a controlled 36-scenario factorial design (3 lighting levels x 4 pose angles x 3 device tiers).\n\nFeatures dual-engine identity enrollment; manual and automated (36-scenario) trial capture with optional manual-confirmation gating between scenarios; live per-engine latency/FPS-equivalent/memory metrics; aggregate and per-scenario precision/recall/F1-score summaries; CSV/JSON export of raw and summarized logs; and a client-vs-server comparison module that calls a real companion API (api-riset-pdp, Cloudflare Workers) or simulates the server-side pathway from network parameters (RTT, upload/download bandwidth, server processing time).\n\nAll biometric processing runs entirely in the browser, in line with a privacy-by-design architecture. Developed as the data-collection instrument for the study 'Inovasi Media ICT Deteksi Wajah untuk Presensi Digital Mahasiswa: Analisis Akurasi dan Performa' (Sismadi, Manan, & Hartini, 2026, ACADEMIA: Jurnal Inovasi Riset Akademik, 6(4), 3400-3408), conducted under the Penelitian Dosen Pemula (PDP) grant at Universitas IPWIJA, Jakarta, with 50 student participants and 180 observations per library in a closed-set verification scenario.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "publication_date": "2026-09-09",
+  "version": "1.0.0",
+  "language": "id",
+  "defined_type": "software",
+  "creators": [
+    {
+      "name": "Sismadi, Wawan",
+      "first_name": "Wawan",
+      "last_name": "Sismadi",
+      "institution": "Universitas IPWIJA / PT Sismadi Langit Solusi",
+      "orcid_id": "0009-0007-2685-5663"
+    }
+  ],
+  "categories": [
+    "Computer Science",
+    "Computer Vision",
+    "Educational Technology"
+  ],
+  "tags": [
+    "face detection",
+    "face recognition",
+    "opencv.js",
+    "face-api.js",
+    "client-side computing",
+    "browser-based biometrics",
+    "privacy by design",
+    "digital attendance",
+    "presensi digital",
+    "computer vision",
+    "webgl",
+    "haar cascade",
+    "tinyfacedetector",
+    "biometric verification",
+    "benchmarking instrument",
+    "research instrument",
+    "factorial experiment design",
+    "precision recall f1-score",
+    "latency measurement",
+    "client-server comparison",
+    "technology readiness level",
+    "higher education",
+    "Universitas IPWIJA",
+    "Indonesia"
+  ],
+  "references": [
+    "Sismadi, W., Manan, A., & Hartini, E. F. (2026). Inovasi Media ICT Deteksi Wajah untuk Presensi Digital Mahasiswa: Analisis Akurasi dan Performa. ACADEMIA: Jurnal Inovasi Riset Akademik, 6(4), 3400-3408. https://doi.org/10.51878/academia.v6i4.13792",
+    "Justad, V. M. (2023). face-api.js: A JavaScript face recognition API for the browser [Computer software]. GitHub. https://github.com/justadudewhohacks/face-api.js",
+    "OpenCV.org. (2024). OpenCV.js: Computer vision library for the web. https://docs.opencv.org/4.x/d5/d10/tutorial_js_root.html",
+    "Kementerian Riset dan Teknologi/Badan Riset dan Inovasi Nasional. (2022). Pedoman penyusunan Tingkat Kesiapterapan Teknologi (TKT). Kemenristek/BRIN."
+  ],
+  "related_materials": [
+    {
+      "title": "Published Article — ACADEMIA: Jurnal Inovasi Riset Akademik",
+      "url": "https://doi.org/10.51878/academia.v6i4.13792",
+      "relation": "IsSupplementTo",
+      "identifier_type": "DOI"
+    },
+    {
+      "title": "Instrument — Live Deployment",
+      "url": "https://sismadi.github.io/app-riset-pdp",
+      "relation": "IsDocumentedBy",
+      "identifier_type": "URL"
+    },
+    {
+      "title": "Source Repository",
+      "url": "https://github.com/sismadi/app-riset-pdp",
+      "relation": "IsSupplementTo",
+      "identifier_type": "URL"
+    },
+    {
+      "title": "Companion Server-Side API — api-riset-pdp",
+      "url": "https://github.com/sismadi/api-riset-pdp",
+      "relation": "IsRequiredBy",
+      "identifier_type": "URL"
+    }
+  ],
+  "custom_fields": {
+    "Software programming language": "JavaScript (ES6+), WebGL",
+    "Development Status": "Active",
+    "Operating System": "Browser (Any OS)"
+  }
+}
