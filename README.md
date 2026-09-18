@@ -5,7 +5,7 @@
 ![Scenarios](https://img.shields.io/badge/Factorial_Design-36_Scenarios-orange)
 ![Privacy](https://img.shields.io/badge/Privacy-by--Design-green)
 ![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey)
-![DOI](https://img.shields.io/badge/DOI-10.5281%2Ffigshare.XXXXXXXX-blue)
+![DOI](https://img.shields.io/badge/DOI-10.6084/m9.figshare.33922063-blue)
 
 Instrumen eksperimen laboratorium terkendali, berbasis **client-side**, untuk membandingkan performa dua pustaka deteksi wajah di peramban — **OpenCV.js** dan **face-api.js** — sebagai media ICT presensi digital mahasiswa. Dirancang untuk mengisi desain faktorial 36 skenario (3 tingkat pencahayaan × 4 sudut pose × 3 kelas perangkat) sebagaimana dilaporkan pada Sismadi, Manan, & Hartini (2026), *ACADEMIA: Jurnal Inovasi Riset Akademik*, 6(4), 3400–3408. [doi.org/10.51878/academia.v6i4.13792](https://doi.org/10.51878/academia.v6i4.13792)
 
@@ -111,8 +111,8 @@ Instrumen ini digunakan untuk menghasilkan data pada eksperimen laboratorium ter
                   untuk Presensi Digital Mahasiswa}},
   year         = {2026},
   publisher    = {Figshare},
-  doi          = {10.5281/figshare.XXXXXXXX},
-  url          = {https://doi.org/10.5281/figshare.XXXXXXXX},
+  doi          = {10.6084/m9.figshare.33922063},
+  url          = {https://doi.org/10.5281/figshare.33922063},
   note         = {Client-side face detection benchmarking instrument (OpenCV.js vs
                   face-api.js), 36-scenario factorial design. Companion server-side API:
                   https://github.com/sismadi/api-riset-pdp.
